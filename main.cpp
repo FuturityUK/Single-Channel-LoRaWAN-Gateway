@@ -215,6 +215,7 @@ void writeRegister(byte addr, byte value)
 
 boolean receivePkt(char *payload)
 {
+    if(debug) printf("  receivePkt() - start:\n");
 
     // clear rxDone
     writeRegister(REG_IRQ_FLAGS, 0x40);
@@ -228,6 +229,7 @@ boolean receivePkt(char *payload)
     {
         printf("CRC error\n");
         writeRegister(REG_IRQ_FLAGS, 0x20);
+        if(debug) printf("  receivePkt() - false - end\n");
         return false;
     } else {
 
@@ -244,11 +246,13 @@ boolean receivePkt(char *payload)
             payload[i] = (char)readRegister(REG_FIFO);
         }
     }
+    if(debug) printf("  receivePkt() - true - end\n");
     return true;
 }
 
 void SetupLoRa()
 {
+    if(debug) printf("SetupLoRa():\n");
     
     digitalWrite(RST, HIGH);
     delay(100);
@@ -320,9 +324,11 @@ void SetupLoRa()
     writeRegister(REG_LNA, LNA_MAX_GAIN);  // max lna gain
     writeRegister(REG_OPMODE, SX72_MODE_RX_CONTINUOS);
 
+    if(debug) printf("------------------\n");
 }
 
 void sendudp(char *msg, int length) {
+    if(debug) printf("  sendudp() - start:\n");
 
 //send the update
 #ifdef SERVER1
@@ -340,9 +346,11 @@ void sendudp(char *msg, int length) {
         die("sendto()");
     }
 #endif
+    if(debug) printf("  sendudp() - end:\n");
 }
 
 void sendstat() {
+    if(debug) printf("sendstat() - start:\n");
 
     static char status_report[STATUS_SIZE]; /* status report as a JSON object */
     char stat_timestamp[24];
@@ -383,6 +391,7 @@ void sendstat() {
     //send the update
     sendudp(status_report, stat_index);
 
+    if(debug) printf("sendstat() - end:\n");
 }
 
 void receivepacket() {
@@ -392,6 +401,9 @@ void receivepacket() {
 
     if(digitalRead(dio0) == 1)
     {
+        if(debug) printf("receivepacket() - start:");
+        if(debug) printf(" digitalRead(dio0) == 1,  ");
+
         if(receivePkt(message)) {
             byte value = readRegister(REG_PKT_SNR_VALUE);
             if( value & 0x80 ) // The SNR sign bit is 1
@@ -537,7 +549,9 @@ void receivepacket() {
 
         } // received a message
 
+        if(debug) printf(" - end:\n");
     } // dio0=1
+
 }
 
 int main () {
@@ -545,26 +559,32 @@ int main () {
     struct timeval nowtime;
     uint32_t lasttime;
 
-    printf("------------------\n");
+    printf("------------------------------\n");
     printf("Single-Channel-LoRaWAN-Gateway\n");
-    printf("------------------\n");
+    printf("------------------------------\n");
 
-    printf("WiringPi setup\n");
-    wiringPiSetup () ;
+    if(debug) printf("WiringPi setup:\n");
+    wiringPiSetup ();
     
-    printf("RPi Pin modes setup\n");
+    if(debug) {
+        printf("RPi Pin modes setup:\n");
+        printf("  ssPin: %d \n", ssPin);
+        printf("  dio0: %d \n", dio0);
+        printf("  RST: %d \n", RST);
+    }
+
     pinMode(ssPin, OUTPUT);
     pinMode(dio0, INPUT);
     pinMode(RST, OUTPUT);
 
-    printf("------------------\n");
-
+    if(debug) printf("wiringPiSPISetup:\n");
     //int fd = 
     wiringPiSPISetup(CHANNEL, 500000);
     //cout << "Init result: " << fd << endl;
 
     SetupLoRa();
 
+    if(debug) printf("Socket Setup:\n");
     if ( (s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
     {
         die("socket");
