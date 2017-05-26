@@ -62,6 +62,8 @@ enum sf_t { SF7=7, SF8, SF9, SF10, SF11, SF12 };
  *
  *******************************************************************************/
 
+bool debug = true;
+
 // SX1272 - Raspberry connections
 //int ssPin = 6;
 int ssPin = 3; // GPO22 pin 15 
@@ -543,10 +545,19 @@ int main () {
     struct timeval nowtime;
     uint32_t lasttime;
 
+    printf("------------------\n");
+    printf("Single-Channel-LoRaWAN-Gateway\n");
+    printf("------------------\n");
+
+    printf("WiringPi setup\n");
     wiringPiSetup () ;
+    
+    printf("RPi Pin modes setup\n");
     pinMode(ssPin, OUTPUT);
     pinMode(dio0, INPUT);
     pinMode(RST, OUTPUT);
+
+    printf("------------------\n");
 
     //int fd = 
     wiringPiSPISetup(CHANNEL, 500000);
